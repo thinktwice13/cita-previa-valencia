@@ -17,12 +17,12 @@ const Home: NextPage = (props: InferGetStaticPropsType<typeof getStaticProps>
       </Head>
 
       <main>
-        <Container px={[1, 2, 3]} maxW="1000px" pt={[8, 10, 12]}>
+        <Container px={[0, 2, 3]} maxW="1000px" pt={[8, 10, 12]}>
           <Header/>
           <Stack>
             <TryAgainLater isVisible={!props.services?.length}/>
             <PushNotSupported/>
-            {props.services?.map(service => <Service key={service.id} id={service.id} name={service.name}/>)}
+            {props.services?.map((s: ServiceData) => <Service key={s.id} id={s.id} name={s.name}/>)}
           </Stack>
         </Container>
       </main>
@@ -50,10 +50,17 @@ export const getStaticProps: GetStaticProps = async (): Promise<GetStaticPropsRe
   }
 }
 
-const servicesUrl = 'http://www.valencia.es/qsige.localizador/citaPrevia/servicios/disponibles/'
 
+interface ServiceResponse {
+  id_servicio: string
+  nombre: string
+}
+const servicesUrl = 'http://www.valencia.es/qsige.localizador/citaPrevia/servicios/disponibles/'
 function getServiceOptions(): Promise<ServiceData[]> {
-  return fetch(servicesUrl)
+  return fetch(servicesUrl, {
+    headers: { 'Content-Type': 'application/json' },
+    method: 'GET',
+  })
     .then((resp) => {
       if (!resp.ok) {
         throw new Error(resp.status.toString())
@@ -61,7 +68,7 @@ function getServiceOptions(): Promise<ServiceData[]> {
       return resp.json()
     })
     .then(res => {
-      return res.reduce((acc, svc) => [...acc, {id: svc.id_servicio, name: svc.nombre}], [])
+      return res.reduce((acc: ServiceData[], svc: ServiceResponse) => [...acc, {id: svc.id_servicio, name: svc.nombre}], [])
     })
 }
 

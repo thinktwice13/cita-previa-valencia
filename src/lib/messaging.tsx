@@ -3,9 +3,21 @@ import { isSupported, getMessaging, getToken } from '@firebase/messaging'
 import firebase from '../utils/firebase'
 
 interface MessagingContext {
+
+  // A firebase registration token used for identifying the device to send notifications to
+  // Requires device/browser notifications to be granted
   token: string
-  isPushSupported: boolean
+
+  // Explict token request. Will also ask user for notifications permission for the device
   requestToken: () => Promise<string>
+
+  // Whether the device supports push notifications
+  isPushSupported: boolean
+
+  // A custom Notification.permission == "denied  flag
+  // Some browwsers block notificaiton permisisons by default
+  // This flag is false until user is shown custom UI (only on initial action that requires notifications)
+  // If used denied, set to true and don't repeat the custom UI prompt
   isDenied: boolean
 }
 
@@ -13,11 +25,6 @@ const ctx = createContext<MessagingContext>({} as MessagingContext)
 function MessagingProvider (props: PropsWithChildren) {
   const [isPushSupported, setIsPushSupported] = useState<boolean>(true)
   const [token, setToken] = useState<string>('')
-
-  // A custom Notification.permission == "denied  flag
-  // Some browwsers block notificaiton permisisons by default
-  // This flag is false until user is shown custom UI (only on initial action that requires notifications)
-  // If used denied, set to true and don't repeat the custom UI prompt
   const [areNotificationsDenied, setAreNotificationsDenied] = useState<boolean>(false)
 
   useEffect(() => {

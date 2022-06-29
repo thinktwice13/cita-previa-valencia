@@ -1,19 +1,31 @@
-import {Box, Collapse, Text, useDisclosure, useToast} from '@chakra-ui/react'
+import {useColorModeValue} from "@chakra-ui/color-mode";
+import {ChevronDownIcon, ChevronUpIcon, Search2Icon} from '@chakra-ui/icons'
+import {Box, Collapse, Flex, Spinner, Text, useDisclosure, useToast} from '@chakra-ui/react'
 import {useEffect, useState} from 'react'
 import Location, {LocationData} from '../locations/Location'
 import {useMessaging} from '../messaging'
 import {getServiceLocations, getServiceSubscriptions, subscribe, unsubscribe} from './db'
+
 
 interface ServiceProps {
   id: string;
   name: string;
 }
 
+function ServiceHeaderRight(props: { isLoading: boolean, isOpen: boolean }) {
+  console.log({loafing: props.isLoading})
+  const color = useColorModeValue('gray.500', 'gray.400')
+
+  if (props.isLoading) return <Spinner color={color} thickness={"2px"} speed={"2.5s"} label={"Loading"} boxSize={6} />
+  if (props.isOpen) return <ChevronUpIcon color={color} boxSize={6}/>
+  return <ChevronDownIcon color={color} boxSize={6}/>
+}
+
 function Service(props: ServiceProps) {
   const {isOpen, onToggle} = useDisclosure()
   const [subscriptions, setSubscriptions] = useState<Record<string, string>>({})
   const {token, isDenied, requestToken} = useMessaging()
-  const [isLoaidng, setIsLoading] = useState<boolean>(true)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
   const [locations, setLocations] = useState<LocationData[]>([])
   const errToast = useToast({
     title: 'Error',
@@ -76,23 +88,40 @@ function Service(props: ServiceProps) {
 
   return (
     <Box>
-      <Box onClick={onToggle} cursor={"pointer"} >
-        <Text>{props.name}</Text>
-      </Box>
+      <Flex
+        bg={useColorModeValue('gray.100', 'gray.800')}
+        onClick={onToggle}
+        cursor="pointer"
+        position="sticky"
+        top="0"
+        px={[3]}
+        py={[5]}
+        borderRadius={[0, 8]}
+        alignItems="center"
+        justifyContent={'space-between'}
+      >
+        <Text fontWeight="800" letterSpacing="tighter">
+          {props.name}
+        </Text>
+        <ServiceHeaderRight isOpen={isOpen} isLoading={isLoading}/>
+      </Flex>
+
       <Collapse in={isOpen && !!locations.length}>
-        {locations.map(loc => {
-          const isSubscribed = !!subscriptions[loc.id]
-          return (
-            <Location
-              key={loc.id}
-              name={loc.name}
-              isSubscribed={isSubscribed}
-              isDisabled={isDenied}
-              appointments={loc.appointments}
-              onToggle={() => isSubscribed ? handleUnsubscribe(loc.id) : handleSubscribe(loc.id)}
-            />
-          )
-        })}
+        <Box mt={2}>
+          {locations.map(loc => {
+            const isSubscribed = !!subscriptions[loc.id]
+            return (
+              <Location
+                key={loc.id}
+                name={loc.name}
+                isSubscribed={isSubscribed}
+                isDisabled={isDenied}
+                appointments={loc.appointments}
+                onToggle={() => isSubscribed ? handleUnsubscribe(loc.id) : handleSubscribe(loc.id)}
+              />
+            )
+          })}
+        </Box>
       </Collapse>
     </Box>
   )

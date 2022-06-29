@@ -7,11 +7,7 @@ interface LocationResp {
   direccion: string
 }
 
-const serviceLocationsUrl = (serviceId: string) =>
-  `http://www.valencia.es/qsige.localizador/citaPrevia/centros/servicio/disponible/${serviceId}`
-const locationAppointmentsUrl = (serviceId: string, locationId: string) =>
-  `http://www.valencia.es/qsige.localizador/citaPrevia/disponible/centro/${locationId}/servicio/${serviceId}/calendario`
-
+// Returns all location options for a service provided in param and all appoinments currently available
 const getServiceLocationsHandler: NextApiHandler = async (
   req: NextApiRequest,
   res: NextApiResponse<LocationData[]>
@@ -23,18 +19,7 @@ const getServiceLocationsHandler: NextApiHandler = async (
   try {
     // TODO Handle if query id array
     const { serviceId } = req.query
-    const locationsResponse = await fetch(serviceLocationsUrl(serviceId as string))
-    if (!locationsResponse.ok) {
-      throw new Error()
-    }
-
-    const respData: Array<{ centros: Array<LocationResp> }> = await locationsResponse.json()
-    const locations = respData[0]?.centros?.map<LocationData>((c) => ({
-      id: c.id_centro,
-      name: c.nombre,
-    }))
-
-    await Promise.allSettled(locations.map((loc, i) => setLocationAppointments(serviceId as string, locations[i])))
+    const locations = await getServiceLocations(serviceId as string)
     return res.status(200).json(locations)
   } catch (err) {
     console.error(err)
@@ -42,17 +27,45 @@ const getServiceLocationsHandler: NextApiHandler = async (
   }
 }
 
-const setLocationAppointments = (serviceId: string, loc: LocationData): Promise<void> => {
-  console.log('setting appointments for', serviceId)
-  return fetch(locationAppointmentsUrl(serviceId, loc.id))
-    .then((resp) => {
-      if (!resp.ok) throw new Error()
-      return resp.json()
-    })
-    .then((data) => {
-      loc.appointments = data.dias
-      return
-    })
+async function getServiceLocations(serviceId: string): Promise<LocationData[]> {
+  const locationsResponse = await fetch(serviceLocationsUrl(serviceId as string), {
+    headers: { 'Content-Type': 'application/json' },
+    method: 'GET',
+  })
+  if (!locationsResponse.ok) {
+    throw new Error()
+  }
+
+  // Fetch service locations and transform to LocationData
+  const respData: Array<{ centros: Array<LocationResp> }> = await locationsResponse.json()
+  const locations = respData[0]?.centros?.map<LocationData>((c) => ({
+    id: c.id_centro,
+    name: c.nombre,
+  }))
+
+  // Find available appointments at all locations for this service
+  await Promise.allSettled(locations.map((loc, i) => setLocationAppointments(serviceId as string, locations[i])))
+  return locations
 }
+
+// A promise that searches and adds available appointments to each location in the provided list
+const setLocationAppointments = async (serviceId: string, loc: LocationData): Promise<void> => {
+  const resp = await fetch(locationAppointmentsUrl(serviceId, loc.id), {
+    headers: { 'Content-Type': 'application/json' },
+    method: 'GET',
+  })
+
+  if (!resp.ok) return
+
+  const respJson = await resp.json()
+  loc.appointments = respJson.dias
+}
+
+// valencia.es endpoints for service locations and appointments availability
+const serviceLocationsUrl = (serviceId: string) =>
+  `http://www.valencia.es/qsige.localizador/citaPrevia/centros/servicio/disponible/${serviceId}`
+const locationAppointmentsUrl = (serviceId: string, locationId: string) =>
+  `http://www.valencia.es/qsige.localizador/citaPrevia/disponible/centro/${locationId}/servicio/${serviceId}/calendario`
+
 
 export default getServiceLocationsHandler
