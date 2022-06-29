@@ -1,7 +1,6 @@
 import {ChakraProvider} from "@chakra-ui/provider";
-import {initializeApp} from "firebase/app";
+import {Container} from "@chakra-ui/react";
 import type {AppProps} from 'next/app'
-import {useEffect} from "react";
 import MessagingProvider from "../lib/messaging";
 import {theme} from "../styles/theme";
 
@@ -9,7 +8,9 @@ function MyApp({Component, pageProps}: AppProps) {
   return (
     <ChakraProvider theme={theme}>
       <MessagingProvider>
-        <Component {...pageProps} />
+        <Container px={[0, 2, 3]} maxW="1000px" pt={[8, 10, 12]}>
+          <Component {...pageProps} />
+        </Container>
       </MessagingProvider>
     </ChakraProvider>
   )

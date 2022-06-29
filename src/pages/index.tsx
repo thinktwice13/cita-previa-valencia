@@ -1,6 +1,7 @@
-import {Container, Stack} from "@chakra-ui/react";
+import {Stack} from "@chakra-ui/react";
 import type {GetStaticProps, GetStaticPropsResult, InferGetStaticPropsType, NextPage} from 'next'
 import Head from "next/head";
+import Footer from "../lib/Footer"
 import Header from "../lib/Header";
 import {PushNotSupported} from "../lib/PushNotSupported";
 import Service from "../lib/services/Service"
@@ -17,14 +18,13 @@ const Home: NextPage = (props: InferGetStaticPropsType<typeof getStaticProps>
       </Head>
 
       <main>
-        <Container px={[0, 2, 3]} maxW="1000px" pt={[8, 10, 12]}>
-          <Header/>
-          <Stack>
-            <TryAgainLater isVisible={!props.services?.length}/>
-            <PushNotSupported/>
-            {props.services?.map((s: ServiceData) => <Service key={s.id} id={s.id} name={s.name}/>)}
-          </Stack>
-        </Container>
+        <Header/>
+        <Stack>
+          <TryAgainLater isVisible={!props.services?.length}/>
+          <PushNotSupported/>
+          {props.services?.map((s: ServiceData) => <Service key={s.id} id={s.id} name={s.name}/>)}
+          <Footer/>
+        </Stack>
       </main>
     </div>
   )
@@ -55,10 +55,12 @@ interface ServiceResponse {
   id_servicio: string
   nombre: string
 }
+
 const servicesUrl = 'http://www.valencia.es/qsige.localizador/citaPrevia/servicios/disponibles/'
+
 function getServiceOptions(): Promise<ServiceData[]> {
   return fetch(servicesUrl, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: {'Content-Type': 'application/json'},
     method: 'GET',
   })
     .then((resp) => {
@@ -68,7 +70,10 @@ function getServiceOptions(): Promise<ServiceData[]> {
       return resp.json()
     })
     .then(res => {
-      return res.reduce((acc: ServiceData[], svc: ServiceResponse) => [...acc, {id: svc.id_servicio, name: svc.nombre}], [])
+      return res.reduce((acc: ServiceData[], svc: ServiceResponse) => [...acc, {
+        id: svc.id_servicio,
+        name: svc.nombre
+      }], [])
     })
 }
 
