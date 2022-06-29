@@ -12,15 +12,6 @@ interface ServiceProps {
   name: string;
 }
 
-function ServiceHeaderRight(props: { isLoading: boolean, isOpen: boolean }) {
-  console.log({loafing: props.isLoading})
-  const color = useColorModeValue('gray.500', 'gray.400')
-
-  if (props.isLoading) return <Spinner color={color} thickness={"2px"} speed={"2.5s"} label={"Loading"} boxSize={6} />
-  if (props.isOpen) return <ChevronUpIcon color={color} boxSize={6}/>
-  return <ChevronDownIcon color={color} boxSize={6}/>
-}
-
 function Service(props: ServiceProps) {
   const {isOpen, onToggle} = useDisclosure()
   const [subscriptions, setSubscriptions] = useState<Record<string, string>>({})
@@ -100,10 +91,10 @@ function Service(props: ServiceProps) {
         alignItems="center"
         justifyContent={'space-between'}
       >
-        <Text fontWeight="800" letterSpacing="tighter">
+        <Text fontWeight="800" letterSpacing="tighter" pr={2}>
           {props.name}
         </Text>
-        <ServiceHeaderRight isOpen={isOpen} isLoading={isLoading}/>
+        <ServiceHeaderRightIcon isOpen={isOpen} isLoading={isLoading}/>
       </Flex>
 
       <Collapse in={isOpen && !!locations.length}>
@@ -125,6 +116,14 @@ function Service(props: ServiceProps) {
       </Collapse>
     </Box>
   )
+}
+
+function ServiceHeaderRightIcon(props: { isLoading: boolean, isOpen: boolean }) {
+  const color = useColorModeValue('gray.500', 'gray.400')
+
+  if (props.isLoading) return <Spinner color={color} thickness={"2px"} speed={"2.5s"} label={"Loading"} boxSize={6} />
+  if (props.isOpen) return <ChevronUpIcon color={color} boxSize={6}/>
+  return <ChevronDownIcon color={color} boxSize={6}/>
 }
 
 export default Service

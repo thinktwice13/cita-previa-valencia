@@ -1,4 +1,6 @@
 import {Stack} from "@chakra-ui/react";
+import {getFirestore} from "@firebase/firestore";
+import {collection, getDocs} from "firebase/firestore";
 import type {GetStaticProps, GetStaticPropsResult, InferGetStaticPropsType, NextPage} from 'next'
 import Head from "next/head";
 import Footer from "../lib/Footer"
@@ -6,6 +8,7 @@ import Header from "../lib/Header";
 import {PushNotSupported} from "../lib/PushNotSupported";
 import Service from "../lib/services/Service"
 import {TryAgainLater} from "../lib/TryAgainLater";
+import firebase from "../utils/firebase";
 
 const Home: NextPage = (props: InferGetStaticPropsType<typeof getStaticProps>
 ) => {
@@ -75,6 +78,11 @@ function getServiceOptions(): Promise<ServiceData[]> {
         name: svc.nombre
       }], [])
     })
+}
+
+function getNotifcationsDeliveredCount() {
+  return getDocs(collection(getFirestore(firebase), 'services'))
+    .then(snap => snap.docs.reduce((acc, doc) => acc + doc.data().delivered))
 }
 
 export default Home
