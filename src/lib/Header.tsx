@@ -3,7 +3,7 @@ import { Box, Heading, Text } from '@chakra-ui/react'
 
 const Header = () => {
   return (
-    <Box mb={[8, 10, 12]}>
+    <Box mb={[8, 10, 12]} px={[6, 0]}>
       <Heading as="h1" textAlign="center" size="2xl" letterSpacing="tighter" fontWeight="800">
         Cita Previa{' '}
         <Box as="span" color={useColorModeValue('orange.500', 'orange.400')}>

@@ -27,11 +27,11 @@ const FooterLink = ({to, label}: FooterLinkProps) => {
 // TODO style for bigger screens
 const Footer = () => {
   return (
-    <>
-      <SimpleGrid columns={[1, 3]} spacing={[2, null, 8]} pb={[2, null, 4]} pt={[2, null, 8]}>
+      <SimpleGrid columns={[1, 3]} spacing={[2, null, 8]} pb={[2, null, 4]} pt={[2, null, 8]} fontSize={14}>
         <Box pb={[8,0]}>
           <NotificationsDelivered/>
         </Box>
+
         <Text textAlign={"center"} fontWeight="700" color={useColorModeValue('gray.500', 'gray.400')}>
           From{' '}
           <a
@@ -59,7 +59,6 @@ const Footer = () => {
           <FooterLink to="/terms" label="Terms"/>
         </HStack>
       </SimpleGrid>
-    </>
   )
 }
 

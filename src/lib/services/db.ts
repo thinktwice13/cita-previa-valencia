@@ -1,6 +1,22 @@
 import { collection, doc, getDocs, getFirestore, increment, query, where, writeBatch } from 'firebase/firestore'
 import firebase from '../../utils/firebase'
 
+interface LocationData {
+  id: string
+  name: string
+}
+
+export function getServiceLocations(serviceId: string): Promise<LocationData[]> {
+  return fetch(`/api/services/${serviceId}/locations`)
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(res.statusText)
+      }
+      return res.json()
+    })
+}
+
+
 export function subscribe (token: string, serviceId: string, locationId: string): Promise<string> {
   if (!token || !serviceId || !locationId) {
     throw new Error('Missing required parameters')
@@ -41,20 +57,4 @@ export function getServiceSubscriptions (token: string, serviceId: string): Prom
     acc[doc.data().locationId] = doc.id
     return acc
   }, {} as Record<string, string>))
-}
-
-interface LocationData {
-  id: string
-  name: string
-}
-
-export function getServiceLocations(serviceId: string): Promise<LocationData[]> {
-  console.log("getServiceLocations", serviceId)
-  return fetch(`/api/services/${serviceId}/locations`)
-    .then(res => {
-      if (!res.ok) {
-        throw new Error(res.statusText)
-      }
-      return res.json()
-    })
 }

@@ -26,7 +26,6 @@ function NotificationsDelivered() {
 
   return <Text
     textAlign="center"
-    fontSize={14}
     fontWeight="500"
     color={textColor}
   >Notifications delivered: <strong>{count}</strong></Text>

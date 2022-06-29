@@ -1,5 +1,6 @@
-import { createContext, PropsWithChildren, useContext, useEffect, useState } from 'react'
-import { isSupported, getMessaging, getToken } from '@firebase/messaging'
+import {useToast} from "@chakra-ui/react";
+import {getMessaging, getToken, isSupported, MessagePayload, onMessage} from '@firebase/messaging'
+import {createContext, PropsWithChildren, useContext, useEffect, useState} from 'react'
 import firebase from '../utils/firebase'
 
 interface MessagingContext {
@@ -22,10 +23,18 @@ interface MessagingContext {
 }
 
 const ctx = createContext<MessagingContext>({} as MessagingContext)
-function MessagingProvider (props: PropsWithChildren) {
+
+function MessagingProvider(props: PropsWithChildren) {
   const [isPushSupported, setIsPushSupported] = useState<boolean>(true)
   const [token, setToken] = useState<string>('')
   const [areNotificationsDenied, setAreNotificationsDenied] = useState<boolean>(false)
+  const toast = useToast({
+    status: 'info',
+    isClosable: true,
+    duration: 10 * 1000,
+    variant: 'solid',
+  })
+
 
   useEffect(() => {
     isSupported().then(supported => {
@@ -36,6 +45,24 @@ function MessagingProvider (props: PropsWithChildren) {
       if (Notification.permission === 'granted') getMessagingToken().then(setToken)
     })
   }, [])
+
+  // Attach message listener to show a notification when app is in the foreground
+  useEffect(() => {
+    if (!token) return
+    const unsubscribe = onMessage(getMessaging(firebase),
+      (payload: MessagePayload) => {
+        toast.closeAll();
+        toast({
+          title: payload.notification?.title,
+          description: payload.notification?.body,
+        });
+      }
+    );
+
+    return () => {
+      unsubscribe && unsubscribe()
+    }
+  }, [token]);
 
   // Token request for user action handles
   // Returns saved token if present
@@ -79,11 +106,11 @@ function MessagingProvider (props: PropsWithChildren) {
   }}>{props.children}</ctx.Provider>
 }
 
-function getMessagingToken (): Promise<string> {
-  return getToken(getMessaging(firebase), { vapidKey: process.env.NEXT_PUBLIC_VAPID_KEY })
+function getMessagingToken(): Promise<string> {
+  return getToken(getMessaging(firebase), {vapidKey: process.env.NEXT_PUBLIC_VAPID_KEY})
 }
 
-export function useMessaging () {
+export function useMessaging() {
   return useContext(ctx)
 }
 
