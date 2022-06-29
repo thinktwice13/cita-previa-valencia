@@ -15,7 +15,7 @@ type TryAgainLaterProps = {
 }
 
 /** Visible when there is an error fetching initial list data: service and locations */
-const TryAgainLater = ({isVisible}: TryAgainLaterProps): JSX.Element | null => {
+function TryAgainLater({isVisible}: TryAgainLaterProps): JSX.Element | null  {
   const cancelRef = useRef<HTMLButtonElement>(null)
 
   if (!isVisible) return null
@@ -57,4 +57,4 @@ TryAgainLater.defaultProps = {
   text: 'Could not retrieve data',
 }
 
-export {TryAgainLater}
+export default TryAgainLater

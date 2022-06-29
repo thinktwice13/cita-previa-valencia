@@ -49,7 +49,7 @@ function Service(props: ServiceProps) {
       setSubscriptions({...subscriptions})
       await unsubscribe(props.id, subscriptionId)
       const updates = await getServiceSubscriptions(token, props.id)
-      return setSubscriptions(updates)
+      setSubscriptions(updates)
     } catch (error) {
       console.error(error)
       errToast({description: `Something went wrong while unsubscribing from ${props.name}`})

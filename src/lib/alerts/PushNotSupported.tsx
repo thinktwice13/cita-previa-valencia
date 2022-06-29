@@ -1,10 +1,10 @@
 import {Alert, AlertDescription, AlertIcon, AlertTitle} from '@chakra-ui/alert'
 import {Box} from '@chakra-ui/layout'
-import {FC, useEffect, useState} from 'react'
-import {useMessaging} from './messaging'
+import {useEffect, useState} from 'react'
+import {useMessaging} from '../messaging'
 
 /** Renders when user's device does not support Push API */
-const PushNotSupported: FC = () => {
+function PushNotSupported(): JSX.Element | null {
   const {isPushSupported: isPushSupported} = useMessaging()
   const [description, setDescription] = useState<string>('')
 
@@ -40,4 +40,4 @@ PushNotSupported.defaultProps = {
   isVisible: false,
 }
 
-export {PushNotSupported}
+export default PushNotSupported

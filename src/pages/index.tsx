@@ -3,11 +3,12 @@ import {getFirestore} from "@firebase/firestore";
 import {collection, getDocs} from "firebase/firestore";
 import type {GetStaticProps, GetStaticPropsResult, InferGetStaticPropsType, NextPage} from 'next'
 import Head from "next/head";
+import NotificationsBlocked from "../lib/alerts/NotificationsBlocked";
+import PushNotSupported from "../lib/alerts/PushNotSupported";
+import TryAgainLater from "../lib/alerts/TryAgainLater";
 import Footer from "../lib/Footer"
 import Header from "../lib/Header";
-import {PushNotSupported} from "../lib/PushNotSupported";
 import Service from "../lib/services/Service"
-import {TryAgainLater} from "../lib/TryAgainLater";
 import firebase from "../utils/firebase";
 
 const Home: NextPage = (props: InferGetStaticPropsType<typeof getStaticProps>
@@ -20,15 +21,15 @@ const Home: NextPage = (props: InferGetStaticPropsType<typeof getStaticProps>
         <link rel="icon" href="/favicon.ico"/>
       </Head>
 
-      <main>
-        <Header/>
-        <Stack>
-          <TryAgainLater isVisible={!props.services?.length}/>
-          <PushNotSupported/>
-          {props.services?.map((s: ServiceData) => <Service key={s.id} id={s.id} name={s.name}/>)}
-          <Footer/>
-        </Stack>
-      </main>
+      <Header/>
+      <Stack>
+        <PushNotSupported/>
+        {props.services?.map((s: ServiceData) => <Service key={s.id} id={s.id} name={s.name}/>)}
+        <Footer/>
+      </Stack>
+
+      <TryAgainLater isVisible={!props.services?.length}/>
+      <NotificationsBlocked/>
     </div>
   )
 }
@@ -52,7 +53,6 @@ export const getStaticProps: GetStaticProps = async (): Promise<GetStaticPropsRe
     return {revalidate: twentyFourHoursInSecs, props: {services: []}}
   }
 }
-
 
 interface ServiceResponse {
   id_servicio: string
