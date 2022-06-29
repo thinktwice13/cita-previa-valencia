@@ -11,7 +11,7 @@ interface MessagingContext {
 
 const ctx = createContext<MessagingContext>({} as MessagingContext)
 function MessagingProvider (props: PropsWithChildren) {
-  const [isPushSupported, setIsPushSupported] = useState<boolean>(false)
+  const [isPushSupported, setIsPushSupported] = useState<boolean>(true)
   const [token, setToken] = useState<string>('')
 
   // A custom Notification.permission == "denied  flag

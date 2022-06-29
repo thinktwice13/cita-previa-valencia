@@ -1,16 +1,32 @@
-import {Box, Heading, Stack} from "@chakra-ui/react";
+import {Container, Stack} from "@chakra-ui/react";
 import type {GetStaticProps, GetStaticPropsResult, InferGetStaticPropsType, NextPage} from 'next'
+import Head from "next/head";
+import Header from "../lib/Header";
+import {PushNotSupported} from "../lib/PushNotSupported";
 import Service from "../lib/services/Service"
+import {TryAgainLater} from "../lib/TryAgainLater";
 
 const Home: NextPage = (props: InferGetStaticPropsType<typeof getStaticProps>
 ) => {
   return (
-    <Box>
-      <Heading>CPV</Heading>
-      <Stack>
-        {props.services?.map(service => <Service key={service.id} id={service.id} name={service.name}/>)}
-      </Stack>
-    </Box>
+    <div>
+      <Head>
+        <title>Cita Previa Valencia</title>
+        <meta name="description" content="Find appointment slots for city hall sertvices in Valencia, Spain"/>
+        <link rel="icon" href="/favicon.ico"/>
+      </Head>
+
+      <main>
+        <Container px={[1, 2, 3]} maxW="1000px" pt={[8, 10, 12]}>
+          <Header/>
+          <Stack>
+            <TryAgainLater isVisible={!props.services?.length}/>
+            <PushNotSupported/>
+            {props.services?.map(service => <Service key={service.id} id={service.id} name={service.name}/>)}
+          </Stack>
+        </Container>
+      </main>
+    </div>
   )
 }
 
