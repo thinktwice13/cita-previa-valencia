@@ -75,8 +75,10 @@ function Service(props: ServiceProps) {
   }
 
   return (
-    <Box onClick={onToggle}>
-      <Text>{props.name}</Text>
+    <Box>
+      <Box onClick={onToggle} cursor={"pointer"} >
+        <Text>{props.name}</Text>
+      </Box>
       <Collapse in={isOpen && !!locations.length}>
         {locations.map(loc => {
           const isSubscribed = !!subscriptions[loc.id]
@@ -86,6 +88,7 @@ function Service(props: ServiceProps) {
               name={loc.name}
               isSubscribed={isSubscribed}
               isDisabled={isDenied}
+              appointments={loc.appointments}
               onToggle={() => isSubscribed ? handleUnsubscribe(loc.id) : handleSubscribe(loc.id)}
             />
           )
