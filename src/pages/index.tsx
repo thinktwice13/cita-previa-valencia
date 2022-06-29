@@ -8,7 +8,7 @@ const Home: NextPage = (props: InferGetStaticPropsType<typeof getStaticProps>
     <Box>
       <Heading>CPV</Heading>
       <Stack>
-        {props.services?.map(service => <Service key={service.id} id={+service.id} name={service.name}/>)}
+        {props.services?.map(service => <Service key={service.id} id={service.id} name={service.name}/>)}
       </Stack>
     </Box>
   )

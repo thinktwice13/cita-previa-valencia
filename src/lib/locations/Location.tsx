@@ -7,6 +7,13 @@ interface LocationProps {
   isDisabled?: boolean
 }
 
+export interface LocationData {
+  id: string
+  name: string
+  appointments?: string[]
+}
+
+
 function Location (props: LocationProps) {
   return (
     <Flex justifyContent={'space-between'} alignItems={'center'}>

@@ -1,26 +1,20 @@
-import { Box, Collapse, Heading, useDisclosure, useToast } from '@chakra-ui/react'
-import Location from '../locations/Location'
-import { useMessaging } from '../messaging'
-import { useEffect, useState } from 'react'
-import { getServiceSubscriptions, subscribe, unsubscribe } from './db'
-
-const locations = [
-  { name: 'location', id: '1' },
-  { name: 'location', id: '2' },
-  { name: 'location', id: '3' },
-  { name: 'location', id: '4' },
-  { name: 'location', id: '5' }
-]
+import {Box, Collapse, Text, useDisclosure, useToast} from '@chakra-ui/react'
+import {useEffect, useState} from 'react'
+import Location, {LocationData} from '../locations/Location'
+import {useMessaging} from '../messaging'
+import {getServiceLocations, getServiceSubscriptions, subscribe, unsubscribe} from './db'
 
 interface ServiceProps {
-  id: number;
+  id: string;
   name: string;
 }
 
-function Service (props: ServiceProps) {
-  const { isOpen, onToggle } = useDisclosure({ isOpen: true })
+function Service(props: ServiceProps) {
+  const {isOpen, onToggle} = useDisclosure()
   const [subscriptions, setSubscriptions] = useState<Record<string, string>>({})
-  const { token, isDenied, requestToken } = useMessaging()
+  const {token, isDenied, requestToken} = useMessaging()
+  const [isLoaidng, setIsLoading] = useState<boolean>(true)
+  const [locations, setLocations] = useState<LocationData[]>([])
   const errToast = useToast({
     title: 'Error',
     duration: 5000,
@@ -33,19 +27,31 @@ function Service (props: ServiceProps) {
     getServiceSubscriptions(token, props.id).then(setSubscriptions)
   }, [token])
 
+  useEffect(() => {
+    if (!isOpen || !!locations.length) {
+      return
+    }
+
+    setIsLoading(true)
+    getServiceLocations(props.id)
+      .then(setLocations)
+      .catch(console.error) // TODO
+      .finally(() => setIsLoading(false))
+  }, [isOpen])
+
   const handleUnsubscribe = async (locationId: string): Promise<void> => {
     const subscriptionId = subscriptions[locationId]
     try {
       delete subscriptions[locationId]
-      setSubscriptions({ ...subscriptions })
+      setSubscriptions({...subscriptions})
       await unsubscribe(props.id, subscriptionId)
       const updates = await getServiceSubscriptions(token, props.id)
       return setSubscriptions(updates)
     } catch (error) {
       console.error(error)
-      errToast({ description: `Something went wrong while unsubscribing from ${props.name}` })
+      errToast({description: `Something went wrong while unsubscribing from ${props.name}`})
       // Revert optimistic update
-      setSubscriptions(prev => ({ ...prev, [locationId]: subscriptionId }))
+      setSubscriptions(prev => ({...prev, [locationId]: subscriptionId}))
     }
   }
 
@@ -54,24 +60,24 @@ function Service (props: ServiceProps) {
       const token = await requestToken()
       if (!token) return // TODO
       // Optimistic update
-      setSubscriptions(prev => ({ ...prev, [locationId]: 'optimisticId' }))
+      setSubscriptions(prev => ({...prev, [locationId]: 'optimisticId'}))
       // Subscribe to service
       await subscribe(token, props.id, locationId)
       const updates = await getServiceSubscriptions(token, props.id)
       setSubscriptions(updates)
     } catch (error) {
       console.error(error)
-      errToast({ description: `Something went wrong while subscribing to ${props.name}` })
+      errToast({description: `Something went wrong while subscribing to ${props.name}`})
       // Revert optimistic update
       delete subscriptions[locationId]
-      return setSubscriptions({ ...subscriptions })
+      return setSubscriptions({...subscriptions})
     }
   }
 
   return (
     <Box onClick={onToggle}>
-      <Heading>{props.name}</Heading>
-      <Collapse in={isOpen}>
+      <Text>{props.name}</Text>
+      <Collapse in={isOpen && !!locations.length}>
         {locations.map(loc => {
           const isSubscribed = !!subscriptions[loc.id]
           return (
