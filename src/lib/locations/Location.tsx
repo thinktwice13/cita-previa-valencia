@@ -40,7 +40,7 @@ function Location(props: LocationProps) {
         <Smalltext data={props.appointments}/>
       </Stack>
       {
-        !props.appointments && <Switch isChecked={!!props.isSubscribed} onChange={props.onToggle} isDisabled={!!props.isDisabled}/>
+        !props.appointments && <Switch size="lg" isChecked={!!props.isSubscribed} onChange={props.onToggle} isDisabled={!!props.isDisabled}/>
       }
     </Flex>
   )
