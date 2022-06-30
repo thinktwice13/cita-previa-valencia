@@ -1,6 +1,4 @@
 import {Stack} from "@chakra-ui/react";
-import {getFirestore} from "@firebase/firestore";
-import {collection, getDocs} from "firebase/firestore";
 import type {GetStaticProps, GetStaticPropsResult, InferGetStaticPropsType, NextPage} from 'next'
 import Head from "next/head";
 import NotificationsBlocked from "../lib/alerts/NotificationsBlocked";
@@ -8,8 +6,7 @@ import PushNotSupported from "../lib/alerts/PushNotSupported";
 import TryAgainLater from "../lib/alerts/TryAgainLater";
 import Footer from "../lib/Footer"
 import Header from "../lib/Header";
-import Service from "../lib/services/Service"
-import firebase from "../utils/firebase";
+import Service from "../lib/Service"
 
 const Home: NextPage = (props: InferGetStaticPropsType<typeof getStaticProps>
 ) => {
@@ -24,12 +21,12 @@ const Home: NextPage = (props: InferGetStaticPropsType<typeof getStaticProps>
       <Header/>
       <Stack>
         <PushNotSupported/>
+        <NotificationsBlocked/>
         {props.services?.map((s: ServiceData) => <Service key={s.id} id={s.id} name={s.name}/>)}
         <Footer/>
       </Stack>
 
       <TryAgainLater isVisible={!props.services?.length}/>
-      <NotificationsBlocked/>
     </div>
   )
 }
@@ -78,11 +75,6 @@ function getServiceOptions(): Promise<ServiceData[]> {
         name: svc.nombre
       }], [])
     })
-}
-
-function getNotifcationsDeliveredCount() {
-  return getDocs(collection(getFirestore(firebase), 'services'))
-    .then(snap => snap.docs.reduce((acc, doc) => acc + doc.data().delivered))
 }
 
 export default Home

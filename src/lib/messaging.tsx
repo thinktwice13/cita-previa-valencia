@@ -1,7 +1,7 @@
 import {useToast} from "@chakra-ui/react";
 import {getMessaging, getToken, isSupported, MessagePayload, onMessage} from '@firebase/messaging'
 import {createContext, PropsWithChildren, useContext, useEffect, useState} from 'react'
-import firebase from '../utils/firebase'
+import firebase from '../utils/firebase-client'
 
 interface MessagingContext {
 
@@ -16,7 +16,7 @@ interface MessagingContext {
   isPushSupported: boolean
 
   // A custom Notification.permission == "denied  flag
-  // Some browwsers block notificaiton permisisons by default
+  // Some browsers deny notification permission by default
   // This flag is false until user is shown custom UI (only on initial action that requires notifications)
   // If used denied, set to true and don't repeat the custom UI prompt
   isDenied: boolean
@@ -35,7 +35,6 @@ function MessagingProvider(props: PropsWithChildren) {
     variant: 'solid',
   })
 
-
   useEffect(() => {
     isSupported().then(supported => {
       if (!supported) return setIsPushSupported(false)
@@ -43,7 +42,7 @@ function MessagingProvider(props: PropsWithChildren) {
       // Only try to get the registration token if push messages are supported on device and permission is already granted
       // Notification permissions should only be requested user action handles
       if (Notification.permission === 'granted') getMessagingToken().then(setToken)
-    })
+    }).catch(err => console.error({err}))
   }, [])
 
   // Attach message listener to show a notification when app is in the foreground

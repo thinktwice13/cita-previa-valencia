@@ -1,5 +1,3 @@
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
 export const formatAppointmentDate = (d: string): string => {
   const day = parseInt(d.slice(8))
   const date = new Date(parseInt(d.slice(0, 4)), parseInt(d.slice(5, 7)) - 1, day)

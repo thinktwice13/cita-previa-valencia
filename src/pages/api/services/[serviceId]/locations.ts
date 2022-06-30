@@ -1,5 +1,5 @@
-import { NextApiHandler, NextApiRequest, NextApiResponse } from 'next'
-import { LocationData } from '../../../../lib/locations/Location'
+import {NextApiRequest, NextApiResponse} from 'next'
+import {LocationData} from '../../../../lib/locations/Location'
 
 interface LocationResp {
   id_centro: string
@@ -8,18 +8,18 @@ interface LocationResp {
 }
 
 // Returns all location options for a service provided in param and all appoinments currently available
-const getServiceLocationsHandler: NextApiHandler = async (
+export default async function getServiceLocationsHandler(
   req: NextApiRequest,
   res: NextApiResponse<LocationData[]>
-) => {
+) {
   if (req.method != 'GET') {
     return res.status(405).setHeader('Allow', ['GET']).end()
   }
 
   try {
     // TODO Handle if query id array
-    const { serviceId } = req.query
-    const locations = await getServiceLocations(serviceId as string)
+    const {serviceId} = req.query as { serviceId: string }
+    const locations = await getServiceLocations(serviceId)
     return res.status(200).json(locations)
   } catch (err) {
     console.error(err)
@@ -28,8 +28,8 @@ const getServiceLocationsHandler: NextApiHandler = async (
 }
 
 async function getServiceLocations(serviceId: string): Promise<LocationData[]> {
-  const locationsResponse = await fetch(serviceLocationsUrl(serviceId as string), {
-    headers: { 'Content-Type': 'application/json' },
+  const locationsResponse = await fetch(serviceLocationsUrl(serviceId), {
+    headers: {'Content-Type': 'application/json'},
     method: 'GET',
   })
   if (!locationsResponse.ok) {
@@ -51,14 +51,16 @@ async function getServiceLocations(serviceId: string): Promise<LocationData[]> {
 // A promise that searches and adds available appointments to each location in the provided list
 const setLocationAppointments = async (serviceId: string, loc: LocationData): Promise<void> => {
   const resp = await fetch(locationAppointmentsUrl(serviceId, loc.id), {
-    headers: { 'Content-Type': 'application/json' },
+    headers: {'Content-Type': 'application/json'},
     method: 'GET',
   })
 
   if (!resp.ok) return
 
   const respJson = await resp.json()
+  // Attach fetched appointments and change id to composite serviceId-locationId to be used as subscription topic
   loc.appointments = respJson.dias
+  loc.id = `${serviceId}_${loc.id}`
 }
 
 // valencia.es endpoints for service locations and appointments availability
@@ -66,6 +68,3 @@ const serviceLocationsUrl = (serviceId: string) =>
   `http://www.valencia.es/qsige.localizador/citaPrevia/centros/servicio/disponible/${serviceId}`
 const locationAppointmentsUrl = (serviceId: string, locationId: string) =>
   `http://www.valencia.es/qsige.localizador/citaPrevia/disponible/centro/${locationId}/servicio/${serviceId}/calendario`
-
-
-export default getServiceLocationsHandler
