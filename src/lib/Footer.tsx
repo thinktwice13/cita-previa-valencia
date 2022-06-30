@@ -1,5 +1,5 @@
 import {useColorModeValue} from '@chakra-ui/color-mode'
-import {Box, HStack, Link, SimpleGrid, Text} from '@chakra-ui/react'
+import {Box, HStack, Link, SimpleGrid, Spacer, Stack, Text} from '@chakra-ui/react'
 import NextLink from 'next/link'
 import NotificationsDelivered from "./NotificationsDelivered";
 
@@ -27,13 +27,9 @@ const FooterLink = ({to, label}: FooterLinkProps) => {
 // TODO style for bigger screens
 const Footer = () => {
   return (
-      <SimpleGrid columns={[1, 3]} spacing={[2, null, 8]} pb={[2, null, 4]} pt={[2, null, 8]} fontSize={14}>
-        <Box pb={[8,0]}>
-          <NotificationsDelivered/>
-        </Box>
-
-        <Text textAlign={"center"} fontWeight="700" color={useColorModeValue('gray.500', 'gray.400')}>
-          From{' '}
+      <Stack  alignItems={["center", null, "baseline"]} direction={["column",null, "row"]} justifyContent={["space-between"]}  spacing={[4]} pb={4} pt={[2, null, 8]} fontSize={14} px={8}>
+        <Text textAlign={"center"} fontWeight="700" color={useColorModeValue('gray.500', 'gray.400')} pt={12}>
+          From{" "}
           <a
             target="_blank"
             rel="noopener noreferrer"
@@ -54,11 +50,13 @@ const Footer = () => {
           </a>
         </Text>
 
+        <NotificationsDelivered/>
+
         <HStack justifyContent={"center"}>
           <FooterLink to="/privacy" label="Privacy"/>
           <FooterLink to="/terms" label="Terms"/>
         </HStack>
-      </SimpleGrid>
+      </Stack>
   )
 }
 

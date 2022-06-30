@@ -6,7 +6,8 @@ import PushNotSupported from "../lib/alerts/PushNotSupported";
 import TryAgainLater from "../lib/alerts/TryAgainLater";
 import Footer from "../lib/Footer"
 import Header from "../lib/Header";
-import Service from "../lib/Service"
+import Service, {ServiceData} from "../lib/Service"
+import {getServiceOptions} from "../lib/service-options";
 
 const Home: NextPage = (props: InferGetStaticPropsType<typeof getStaticProps>
 ) => {
@@ -31,11 +32,6 @@ const Home: NextPage = (props: InferGetStaticPropsType<typeof getStaticProps>
   )
 }
 
-interface ServiceData {
-  id: string
-  name: string
-}
-
 export const getStaticProps: GetStaticProps = async (): Promise<GetStaticPropsResult<{ services: ServiceData[] }>> => {
   const twentyFourHoursInSecs = 24 * 60 * 60
   try {
@@ -49,32 +45,6 @@ export const getStaticProps: GetStaticProps = async (): Promise<GetStaticPropsRe
     console.log(err)
     return {revalidate: twentyFourHoursInSecs, props: {services: []}}
   }
-}
-
-interface ServiceResponse {
-  id_servicio: string
-  nombre: string
-}
-
-const servicesUrl = 'http://www.valencia.es/qsige.localizador/citaPrevia/servicios/disponibles/'
-
-function getServiceOptions(): Promise<ServiceData[]> {
-  return fetch(servicesUrl, {
-    headers: {'Content-Type': 'application/json'},
-    method: 'GET',
-  })
-    .then((resp) => {
-      if (!resp.ok) {
-        throw new Error(resp.status.toString())
-      }
-      return resp.json()
-    })
-    .then(res => {
-      return res.reduce((acc: ServiceData[], svc: ServiceResponse) => [...acc, {
-        id: svc.id_servicio,
-        name: svc.nombre
-      }], [])
-    })
 }
 
 export default Home

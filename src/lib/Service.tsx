@@ -5,10 +5,12 @@ import {useEffect, useState} from 'react'
 import Location from './locations/Location'
 import {useMessaging} from './messaging'
 
-interface ServiceProps {
-  id: string;
-  name: string;
+export interface ServiceData {
+  id: string
+  name: string
 }
+
+type ServiceProps = ServiceData
 
 interface LocationData {
   id: string
@@ -77,7 +79,12 @@ function ServiceHeaderRightIcon(props: { isLoading: boolean, isOpen: boolean }) 
 }
 
 function getServiceLocations(serviceId: string): Promise<LocationData[]> {
-  return fetch(`/api/services/${serviceId}/locations`)
+  return fetch(`/api/services/${serviceId}/locations`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+  })
     .then(res => {
       if (!res.ok) {
         throw new Error(res.statusText)

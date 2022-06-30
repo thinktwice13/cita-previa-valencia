@@ -33,6 +33,7 @@ function MessagingProvider(props: PropsWithChildren) {
     isClosable: true,
     duration: 10 * 1000,
     variant: 'solid',
+    position: 'top',
   })
 
   useEffect(() => {
@@ -51,6 +52,7 @@ function MessagingProvider(props: PropsWithChildren) {
     const unsubscribe = onMessage(getMessaging(firebase),
       (payload: MessagePayload) => {
         toast.closeAll();
+        // FIXME toast not showing up. Also on subscription error
         toast({
           title: payload.notification?.title,
           description: payload.notification?.body,
