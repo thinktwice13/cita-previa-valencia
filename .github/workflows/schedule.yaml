@@ -1,0 +1,18 @@
+name: schedule
+
+on:
+  schedule:
+    # Every 15 minutes between 7am and 12am on weekdays
+    - cron: "*/15 7-12 * * 1-5"
+    # Every 60 minutes between 12pm and 8pm on weekdays
+    - cron: "0 */60 12-20 * * 1-5"
+
+jobs:
+  cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appointment Check and Notify
+        run: |
+          curl --request POST \
+          --url 'https://www.citapreviavalencia/api/appointments' \
+          --header 'Authorization: Bearer ${{ secrets.API_SECRET_KEY }}'
