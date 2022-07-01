@@ -1,5 +1,6 @@
 import {NextApiRequest, NextApiResponse} from 'next'
 import {LocationData} from '../../../../lib/locations/Location'
+import { withSentry } from "@sentry/nextjs";
 
 interface LocationResp {
   id_centro: string
@@ -8,7 +9,7 @@ interface LocationResp {
 }
 
 // Returns all location options for a service provided in param and all appoinments currently available
-export default async function getServiceLocationsHandler(
+async function getServiceLocationsHandler(
   req: NextApiRequest,
   res: NextApiResponse<LocationData[]>
 ) {
@@ -68,3 +69,5 @@ const serviceLocationsUrl = (serviceId: string) =>
   `http://www.valencia.es/qsige.localizador/citaPrevia/centros/servicio/disponible/${serviceId}`
 const locationAppointmentsUrl = (serviceId: string, locationId: string) =>
   `http://www.valencia.es/qsige.localizador/citaPrevia/disponible/centro/${locationId}/servicio/${serviceId}/calendario`
+
+export default withSentry(getServiceLocationsHandler);

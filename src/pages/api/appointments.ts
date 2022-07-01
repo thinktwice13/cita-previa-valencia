@@ -5,7 +5,7 @@ import {getServiceOptions} from "../../lib/service-options";
 import admin from "../../utils/firebase-admin";
 
 export default async function NotifyAppointments(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method != 'POST') {
+  if (req.method !== 'POST') {
     return res.status(405).setHeader('Allow', ['POST']).end()
   }
 
@@ -16,6 +16,7 @@ export default async function NotifyAppointments(req: NextApiRequest, res: NextA
   }
 
   if (token !== process.env.API_SECRET_KEY) {
+    // TODO
     return res.status(403).end()
   }
 
@@ -24,8 +25,9 @@ export default async function NotifyAppointments(req: NextApiRequest, res: NextA
   } catch (err) {
     console.error(err)
     // TODO logging
+    res.status(500).send(err)
   } finally {
-    res.status(204).send("Finished")
+    res.status(204).end()
   }
 }
 
