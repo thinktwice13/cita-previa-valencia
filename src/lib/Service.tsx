@@ -1,7 +1,9 @@
 import {useColorModeValue} from "@chakra-ui/color-mode";
 import {ChevronDownIcon, ChevronUpIcon} from '@chakra-ui/icons'
 import {Box, Collapse, Flex, Spinner, Text, useDisclosure} from '@chakra-ui/react'
+import {captureException} from "@sentry/nextjs";
 import {useEffect, useState} from 'react'
+import FailedToGetLocations from "./locations/FailedToGetLocations";
 import Location from './locations/Location'
 import {useMessaging} from './messaging'
 
@@ -22,15 +24,18 @@ function Service(props: ServiceProps) {
   const {isOpen, onToggle} = useDisclosure()
   const {isDenied} = useMessaging()
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [locations, setLocations] = useState<LocationData[]>([])
+  const [locations, setLocations] = useState<LocationData[] | null>([])
 
   useEffect(() => {
-    if (!isOpen || !!locations.length) return
+    if (!isOpen || !!locations?.length) return
 
     setIsLoading(true)
     getServiceLocations(props.id)
       .then(setLocations)
-      .catch(console.error) // TODO
+      .catch(err => {
+        captureException(err)
+        setLocations(null)
+      })
       .finally(() => setIsLoading(false))
   }, [isOpen])
 
@@ -54,9 +59,10 @@ function Service(props: ServiceProps) {
         <ServiceHeaderRightIcon isOpen={isOpen} isLoading={isLoading}/>
       </Flex>
 
-      <Collapse in={isOpen && !!locations.length}>
+      <Collapse in={isOpen && !!locations?.length}>
         <Box mt={2}>
-          {locations.map(loc => <Location
+          <FailedToGetLocations isOpen={locations === null}/>
+          {locations?.map(loc => <Location
               key={loc.id}
               topic={loc.id}
               name={loc.name}

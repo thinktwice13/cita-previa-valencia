@@ -31,11 +31,11 @@ export default function NotificationsBlocked() {
     <>
       {!isOpen && isDenied &&
           <Alert status="warning" variant="solid" borderRadius={8}>
-            <AlertIcon/>
-            <Box flex="1">
-              <AlertTitle>{title}</AlertTitle>
-              <AlertDescription display="block">{desc}</AlertDescription>
-            </Box>
+              <AlertIcon/>
+              <Box flex="1">
+                  <AlertTitle>{title}</AlertTitle>
+                  <AlertDescription display="block">{desc}</AlertDescription>
+              </Box>
           </Alert>
       }
 
@@ -45,8 +45,15 @@ export default function NotificationsBlocked() {
             <AlertDialogHeader fontSize="lg" fontWeight="bold">{title}</AlertDialogHeader>
             <AlertDialogBody>{desc}</AlertDialogBody>
             <AlertDialogFooter>
-              <Button id="close-alert" width={'full'} colorScheme="red" onClick={() => window.location.reload()}
-                      ml={3}>Close</Button>
+              <Button
+                id="close-alert"
+                width={'full'}
+                colorScheme="red"
+                onClick={() => window.location.reload()}
+                ml={3}
+              >
+                Close
+              </Button>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialogOverlay>

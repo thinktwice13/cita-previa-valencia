@@ -1,5 +1,6 @@
 import {useToast} from "@chakra-ui/react";
 import {getMessaging, getToken, isSupported, MessagePayload, onMessage} from '@firebase/messaging'
+import {captureException} from "@sentry/nextjs";
 import {createContext, PropsWithChildren, useContext, useEffect, useState} from 'react'
 import firebase from '../utils/firebase-client'
 
@@ -43,7 +44,7 @@ function MessagingProvider(props: PropsWithChildren) {
       // Only try to get the registration token if push messages are supported on device and permission is already granted
       // Notification permissions should only be requested user action handles
       if (Notification.permission === 'granted') getMessagingToken().then(setToken)
-    }).catch(err => console.error({err}))
+    }).catch(console.error)
   }, [])
 
   // Attach message listener to show a notification when app is in the foreground
@@ -73,9 +74,9 @@ function MessagingProvider(props: PropsWithChildren) {
 
     try {
       // Show custom notifications permissions prompt if this is the first user request
-      if (Notification.permission === 'denied' && !areNotificationsDenied) {
-        // TODO Show alert
-      }
+      // if (Notification.permission === 'denied' && !areNotificationsDenied) {
+      //   // TODO Show alert
+      // }
 
       // If no option selected by user yet, show browser notification permission prompt
       if (Notification.permission === 'default') {
@@ -94,7 +95,7 @@ function MessagingProvider(props: PropsWithChildren) {
       setAreNotificationsDenied(true)
       return ''
     } catch (err) {
-      console.error(err)
+      captureException(err)
       return ''
     }
   }

@@ -1,3 +1,4 @@
+import {captureException} from "@sentry/nextjs";
 import {ServiceData} from "./Service";
 
 interface ServiceResponse {
@@ -6,6 +7,7 @@ interface ServiceResponse {
 }
 
 const servicesUrl = 'http://www.valencia.es/qsige.localizador/citaPrevia/servicios/disponibles/'
+
 export function getServiceOptions(): Promise<ServiceData[]> {
   return fetch(servicesUrl, {
     headers: {'Content-Type': 'application/json'},
@@ -22,5 +24,8 @@ export function getServiceOptions(): Promise<ServiceData[]> {
         id: svc.id_servicio,
         name: svc.nombre
       }], [])
+    }).catch(err => {
+      captureException(err)
+      return []
     })
 }
