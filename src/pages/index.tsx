@@ -1,4 +1,5 @@
 import {Stack} from "@chakra-ui/react";
+import {captureException, captureMessage} from "@sentry/nextjs";
 import type {GetStaticProps, GetStaticPropsResult, InferGetStaticPropsType, NextPage} from 'next'
 import Head from "next/head";
 import NotificationsBlocked from "../lib/alerts/NotificationsBlocked";
@@ -37,12 +38,13 @@ export const getStaticProps: GetStaticProps = async (): Promise<GetStaticPropsRe
   try {
     const services = await getServiceOptions()
     if (services.length == 0) {
-      throw new Error('failed to fetch services')
+      captureMessage("failed to revalidate available services", "info")
+      throw new Error()
     }
 
     return {revalidate: 3 * twentyFourHoursInSecs, props: {services}}
   } catch (err) {
-    console.log(err)
+    captureException(err)
     return {revalidate: twentyFourHoursInSecs, props: {services: []}}
   }
 }

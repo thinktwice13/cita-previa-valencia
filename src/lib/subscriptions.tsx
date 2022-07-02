@@ -1,4 +1,5 @@
 import {useToast} from '@chakra-ui/react'
+import {captureException, captureMessage} from "@sentry/nextjs";
 import {
   collection,
   doc,
@@ -34,7 +35,7 @@ function SubscriptionsProvider(props: PropsWithChildren) {
 
   useEffect(() => {
     if (!token) return
-    getDeviceSubscriptions(token).then(setSubscriptions).catch(console.error)
+    getDeviceSubscriptions(token).then(setSubscriptions).catch(() => captureMessage("Failed to retrieve subscriptions", "warning"))
   }, [token])
 
   const handleSubscribe = async (topic: string): Promise<void> => {
@@ -51,13 +52,15 @@ function SubscriptionsProvider(props: PropsWithChildren) {
       const updates = await getDeviceSubscriptions(token)
       setSubscriptions(updates)
     } catch (error) {
+      captureException(error)
+      captureMessage("Subscription failed", "warning")
+
+      // Revert optimistic update
+      delete subscriptions[topic]
+      setSubscriptions({...subscriptions})
       toast({
         title: 'Error subscribing',
       })
-      // Revert optimistic update
-      console.error(error)
-      delete subscriptions[topic]
-      setSubscriptions({...subscriptions})
     }
   }
 
@@ -71,12 +74,13 @@ function SubscriptionsProvider(props: PropsWithChildren) {
       const updates = await getDeviceSubscriptions(token)
       setSubscriptions(updates)
     } catch (error) {
+      captureException(error)
+      captureMessage("Unsubscribe failed", "warning")
+      // Revert optimistic update
+      setSubscriptions(prev => ({...prev, [topic]: subscriptionId}))
       toast({
         title: 'Error unsubscribing',
       })
-      // Revert optimistic update
-      setSubscriptions(prev => ({...prev, [topic]: subscriptionId}))
-      console.error(error)
     }
   }
 

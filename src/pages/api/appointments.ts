@@ -1,10 +1,11 @@
+import {captureException, withSentry} from "@sentry/nextjs";
 import {FieldValue, getFirestore, QueryDocumentSnapshot} from "firebase-admin/firestore";
 import {getMessaging} from "firebase-admin/messaging"
 import {NextApiRequest, NextApiResponse} from "next";
 import {getServiceOptions} from "../../lib/service-options";
 import admin from "../../utils/firebase-admin";
 
-export default async function NotifyAppointments(req: NextApiRequest, res: NextApiResponse) {
+async function NotifyAppointments(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).setHeader('Allow', ['POST']).end()
   }
@@ -23,8 +24,7 @@ export default async function NotifyAppointments(req: NextApiRequest, res: NextA
   try {
     await checkAndNotify()
   } catch (err) {
-    console.error(err)
-    // TODO logging
+    captureException(err)
     res.status(500).send(err)
   } finally {
     res.status(204).end()
@@ -32,6 +32,7 @@ export default async function NotifyAppointments(req: NextApiRequest, res: NextA
 }
 
 
+// Get full appointment check url for service and location
 const topicAppointmentsUrl = (location: string, service: string): string => `http://www.valencia.es/qsige.localizador/citaPrevia/disponible/centro/${location}/servicio/${service}/calendario`
 
 async function hasTopicNewAppointments(topic: string, cb: (has: boolean) => void): Promise<void> {
@@ -49,7 +50,8 @@ async function hasTopicNewAppointments(topic: string, cb: (has: boolean) => void
     const data = await res.json();
     return cb(!!data.dias?.length)
   } catch (error) {
-    console.error('Error fetching topic appointments!', error) // TODO serverless logging
+    // Appointment check for a topic failed. valencia.es unreliable API
+    // TODO Retry
     return cb(false)
   }
 }
@@ -63,7 +65,7 @@ async function topicsWithAppointments(topics: Set<string>) {
 }
 
 /**
- * Returns a list of topics that have devices subscribed to them
+ * Returns a list of topics with devices subscribed to them
  */
 async function getActiveSubscribedTopics(): Promise<string[]> {
   return getFirestore(admin)
@@ -71,66 +73,80 @@ async function getActiveSubscribedTopics(): Promise<string[]> {
     .where('active', '>', 0)
     .get()
     .then(snap => snap.docs.map(doc => doc.id))
+    .catch(err => {
+      captureException(err)
+      return []
+    })
 }
 
 /**
  * Returns a list of subscription records grouped by service
  * @param {Set<string>>} topics
  */
-async function subscriptionsByService(topics: Set<string>): Promise<Record<string, QueryDocumentSnapshot[]>> {
-  const subscriptionsSnap = await getFirestore(admin)
-    .collection('subscriptions')
-    .where('topic', 'in', Array.from(topics))
-    .get()
+async function subscriptionsByService(topics: Set<string>): Promise<Record<string, QueryDocumentSnapshot[]> | null> {
+  try {
 
-  // Summarize by service
-  return subscriptionsSnap.docs.reduce((acc: Record<string, QueryDocumentSnapshot[]>, doc) => {
-    const serviceId = doc.data().topic.split('_')[0]
-    if (!acc[serviceId]) acc[serviceId] = []
-    acc[serviceId].push(doc)
-    return acc
-  }, {} as Record<string, QueryDocumentSnapshot[]>)
+    const subscriptionsSnap = await getFirestore(admin)
+      .collection('subscriptions')
+      .where('topic', 'in', Array.from(topics))
+      .get()
+
+    // Summarize by service
+    return subscriptionsSnap.docs.reduce((acc: Record<string, QueryDocumentSnapshot[]>, doc) => {
+      const serviceId = doc.data().topic.split('_')[0]
+      if (!acc[serviceId]) acc[serviceId] = []
+      acc[serviceId].push(doc)
+      return acc
+    }, {} as Record<string, QueryDocumentSnapshot[]>)
+  } catch (error) {
+    captureException(error)
+    return null
+
+  }
 }
 
 /**
  * Notifies a set of devices subscribed to topic that has new appointments
- * @param {QueryDocumentSnapshot[]} subscription records subscribed to services
+ * @param {QueryDocumentSnapshot[]} subscriptions records subscribed to services
  * @param {string} serviceName to use in the notification
  */
 async function notifyDevices(subscriptions: QueryDocumentSnapshot[], serviceName: string): Promise<void> {
   // Send multicast message to all devices subscribed to this topic
-  const resp = await getMessaging(admin).sendMulticast(makeServiceMessage(serviceName, subscriptions.map(s => s.data().token)))
+  try {
+    const resp = await getMessaging(admin).sendMulticast(makeServiceMessage(serviceName, subscriptions.map(s => s.data().token)))
 
-  // Use batch writes
-  // Update topic counters
-  // Delete subscription on successful message delivery
-  // Delete subcription on invalid token error on delivery
-  // Delete sbscription if older than two months
-  // TODO Handle 3rd paty auth error
-  const batch = getFirestore(admin).batch()
-  subscriptions.forEach((s, i) => {
-    const { error } = resp.responses[i]
-    const isDelivered = !error
+    // Use batch writes
+    // Update topic counters
+    // Delete subscription on successful message delivery
+    // Delete subcription on invalid token error on delivery
+    // Delete sbscription if older than two months
+    // TODO Handle 3rd paty auth error
+    const batch = getFirestore(admin).batch()
+    subscriptions.forEach((s, i) => {
+      const {error} = resp.responses[i]
+      const isDelivered = !error
 
-    if (isDelivered) {
-      const topicRef = getFirestore(admin).collection('topics').doc(s.data().topic)
-      batch.update(topicRef, {"delivered": FieldValue.increment(1)})
-    }
+      if (isDelivered) {
+        const topicRef = getFirestore(admin).collection('topics').doc(s.data().topic)
+        batch.update(topicRef, {"delivered": FieldValue.increment(1)})
+      }
 
+      // TODO log error
+      // TODO handle messaging/third-party-auth-error
+      // TODO Handle retries
+      const olderThanTwoMonths = s.createTime.toDate().getTime() < Date.now() - 1000 * 60 * 60 * 24 * 30 * 2
+      console.log({s, isDelivered, error, info: error?.code, olderThanTwoMonths})
+      const shouldRemove = isDelivered || olderThanTwoMonths || error?.code === 'messaging/invalid-registration-token' || error?.code === 'messaging/registration-token-not-registered'
+      if (shouldRemove) {
+        console.log("Should remove!")
+        // batch.delete(s.ref)
+      }
+    })
 
-    // TODO log error
-    // TODO handle messaging/third-party-auth-error
-    // TODO Handle retries
-    const olderThanTwoMonths = s.createTime.toDate().getTime() < Date.now() - 1000 * 60 * 60 * 24 * 30 * 2
-    console.log({s, isDelivered, error, info: error?.code, olderThanTwoMonths})
-    const shouldRemove = isDelivered || olderThanTwoMonths || error?.code === 'messaging/invalid-registration-token' || error?.code === 'messaging/registration-token-not-registered'
-    if (shouldRemove) {
-      console.log("Should remove!")
-      // batch.delete(s.ref)
-    }
-  })
-
-  await batch.commit()
+    await batch.commit()
+  } catch (error) {
+    captureException(error)
+  }
 }
 
 /**
@@ -138,7 +154,15 @@ async function notifyDevices(subscriptions: QueryDocumentSnapshot[], serviceName
  * @param {Set<string>} topics
  */
 async function notifyTopics(topics: Set<string>): Promise<void> {
+  // Fetch all available services and currently active subscriptions for topics with found appointments
   const [serviceList, subscriptions] = await Promise.all([getServiceOptions(), subscriptionsByService(topics)])
+
+  if (!serviceList?.length || !subscriptions) {
+    // Try next tick
+    return
+  }
+
+  // Find subscriptions and notify all devices
   serviceList.forEach(s => {
     const subs = subscriptions[s.id]
     if (!subs) return
@@ -182,8 +206,11 @@ function makeServiceMessage(serviceName: string, tokens: string[]): any {
 async function checkAndNotify(): Promise<void> {
   const topics = new Set(await getActiveSubscribedTopics())
 
+  // Check for all subscribed topics appointments
+  // Remove topics with no appointments from set
   await topicsWithAppointments(topics)
-  // Most ticks will stop here. If any topics have new appointments, we'll notify them.
+
+  // Most ticks will stop here (when no appointments found for a topic). If any topics have new appointments, we'll notify them.
   // We will need service and location names.
   // TODO Consider storing names instead of fetching here
   if (!topics.size) {
@@ -191,3 +218,5 @@ async function checkAndNotify(): Promise<void> {
   }
   await notifyTopics(topics)
 }
+
+export default withSentry(NotifyAppointments);
