@@ -14,5 +14,5 @@ jobs:
       - name: Appointment Check and Notify
         run: |
           curl --request POST \
-          --url 'https://www.citapreviavalencia/api/appointments' \
+          --url 'https://citapreviavalencia.com/api/appointments' \
           --header 'Authorization: Bearer ${{ secrets.API_SECRET_KEY }}'
