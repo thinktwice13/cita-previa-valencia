@@ -23,11 +23,11 @@ async function NotifyAppointments(req: NextApiRequest, res: NextApiResponse) {
 
   try {
     await checkAndNotify()
+    console.log('Notified')
+    res.status(204).end()
   } catch (err) {
     captureException(err)
     res.status(500).send(err)
-  } finally {
-    res.status(204).end()
   }
 }
 
@@ -101,7 +101,6 @@ async function subscriptionsByService(topics: Set<string>): Promise<Record<strin
   } catch (error) {
     captureException(error)
     return null
-
   }
 }
 
@@ -112,41 +111,40 @@ async function subscriptionsByService(topics: Set<string>): Promise<Record<strin
  */
 async function notifyDevices(subscriptions: QueryDocumentSnapshot[], serviceName: string): Promise<void> {
   // Send multicast message to all devices subscribed to this topic
-  try {
-    const resp = await getMessaging(admin).sendMulticast(makeServiceMessage(serviceName, subscriptions.map(s => s.data().token)))
+  const resp = await getMessaging(admin).sendMulticast(makeServiceMessage(serviceName, subscriptions.map(s => s.data().token)))
+  console.log({resp})
+  // Use batch writes
+  // Update topic counters
+  // Delete subscription on successful message delivery
+  // Delete subscription on invalid token error on delivery
+  // Delete subscription if older than two months
+  // TODO Handle 3rd paty auth error
+  const batch = getFirestore(admin).batch()
+  subscriptions.forEach((s, i) => {
+    const {error} = resp.responses[i]
+    const isDelivered = !error
 
-    // Use batch writes
-    // Update topic counters
-    // Delete subscription on successful message delivery
-    // Delete subcription on invalid token error on delivery
-    // Delete sbscription if older than two months
-    // TODO Handle 3rd paty auth error
-    const batch = getFirestore(admin).batch()
-    subscriptions.forEach((s, i) => {
-      const {error} = resp.responses[i]
-      const isDelivered = !error
+    if (isDelivered) {
+      const topicRef = getFirestore(admin).collection('topics').doc(s.data().topic)
+      batch.update(topicRef, {"delivered": FieldValue.increment(1)})
+    }
 
-      if (isDelivered) {
-        const topicRef = getFirestore(admin).collection('topics').doc(s.data().topic)
-        batch.update(topicRef, {"delivered": FieldValue.increment(1)})
-      }
+    // Remove subscription if:
+    // - Message was delivered
+    // - Error is invalid token
+    // - Error is token not registered (expired)
+    // - Subscriptions older than 60 days
+    // TODO handle messaging/third-party-auth-error
+    // TODO Handle retries
+    const shouldRemove = isDelivered
+      || error?.code === 'messaging/invalid-registration-token'
+      || error?.code === 'messaging/registration-token-not-registered'
+      || s.createTime.toDate().getTime() < Date.now() - 1000 * 60 * 60 * 24 * 30 * 2
 
-      // TODO log error
-      // TODO handle messaging/third-party-auth-error
-      // TODO Handle retries
-      const olderThanTwoMonths = s.createTime.toDate().getTime() < Date.now() - 1000 * 60 * 60 * 24 * 30 * 2
-      console.log({s, isDelivered, error, info: error?.code, olderThanTwoMonths})
-      const shouldRemove = isDelivered || olderThanTwoMonths || error?.code === 'messaging/invalid-registration-token' || error?.code === 'messaging/registration-token-not-registered'
-      if (shouldRemove) {
-        console.log("Should remove!")
-        // batch.delete(s.ref)
-      }
-    })
+    if (shouldRemove) batch.delete(s.ref)
+  })
 
-    await batch.commit()
-  } catch (error) {
-    captureException(error)
-  }
+  await batch.commit()
 }
 
 /**
