@@ -23,7 +23,7 @@ interface LocationProps {
   isDisabled?: boolean
 }
 
-function Location(props: LocationProps) {
+function Location(props: Readonly<LocationProps>) {
   const {isSubscribed, onToggle } = useSubscription(props.topic)
 
   return (
@@ -47,9 +47,9 @@ function Location(props: LocationProps) {
   )
 }
 
-function Smalltext(props: { data?: string[] }) {
+function Smalltext(props: Readonly<{ data?: string[] }>) {
   const color = useColorModeValue('gray.500', 'gray.400')
-  return <Text color={color}>{!!props.data?.length ? formatAppointments(props.data) : "Not available. Subscribe"}</Text>
+  return <Text color={color}>{props.data?.length ? formatAppointments(props.data) : "Not available. Subscribe"}</Text>
 }
 
 export default Location

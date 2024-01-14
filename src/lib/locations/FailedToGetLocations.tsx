@@ -1,6 +1,6 @@
 import {Flex, Stack, Text, useColorModeValue} from '@chakra-ui/react'
 
-function FailedToGetLocations(props: { isOpen: boolean }) {
+function FailedToGetLocations(props: Readonly<{ isOpen: boolean }>) {
   const color  = useColorModeValue('gray.500', 'gray.400')
   const bg = useColorModeValue('gray.100', 'gray.800')
   if (!props.isOpen) return null

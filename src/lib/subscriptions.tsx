@@ -11,7 +11,7 @@ import {
   where,
   writeBatch
 } from "firebase/firestore";
-import {createContext, PropsWithChildren, useContext, useEffect, useState} from "react";
+import {createContext, PropsWithChildren, useContext, useEffect, useMemo, useState} from "react";
 import firebase from "../utils/firebase-client";
 import {useMessaging} from "./messaging";
 
@@ -23,7 +23,7 @@ interface SubscriptionsContext {
 
 const ctx = createContext({} as SubscriptionsContext)
 
-function SubscriptionsProvider(props: PropsWithChildren) {
+function SubscriptionsProvider(props: Readonly<PropsWithChildren>) {
   const {token, requestToken} = useMessaging()
   const [subscriptions, setSubscriptions] = useState<Record<string, string>>({})
   const toast = useToast({
@@ -84,11 +84,8 @@ function SubscriptionsProvider(props: PropsWithChildren) {
     }
   }
 
-  return <ctx.Provider value={{
-    subscriptions,
-    subscribe: handleSubscribe,
-    unsubscribe: handleUnsubscribe
-  }}>{props.children}</ctx.Provider>
+  const value = useMemo(() => ({subscriptions, subscribe: handleSubscribe, unsubscribe: handleUnsubscribe}), [subscriptions])
+  return <ctx.Provider value={value}>{props.children}</ctx.Provider>
 }
 
 interface UseSubscriptionReturn {
@@ -102,7 +99,7 @@ export function useSubscription(topic: string): UseSubscriptionReturn {
 
   return {
     isSubscribed: !!subscriptionId,
-    onToggle: () => !!subscriptionId ? unsubscribe(topic) : subscribe(topic)
+    onToggle: () => subscriptionId ? unsubscribe(topic) : subscribe(topic)
   }
 }
 

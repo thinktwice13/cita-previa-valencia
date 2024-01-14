@@ -45,7 +45,7 @@ async function getServiceLocations(serviceId: string): Promise<LocationData[]> {
   }))
 
   // Find available appointments at all locations for this service
-  await Promise.allSettled(locations.map((loc, i) => setLocationAppointments(serviceId as string, locations[i])))
+  await Promise.allSettled(locations.map((_, i) => setLocationAppointments(serviceId, locations[i])))
   return locations
 }
 

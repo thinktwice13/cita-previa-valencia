@@ -5,7 +5,7 @@ import {useMessaging} from '../messaging'
 
 /** Renders when user's device does not support Push API */
 function PushNotSupported(): JSX.Element | null {
-  const {isPushSupported: isPushSupported} = useMessaging()
+  const {isPushSupported} = useMessaging()
   const [description, setDescription] = useState<string>('')
 
   /** Handle notices for different platforms and browsers */

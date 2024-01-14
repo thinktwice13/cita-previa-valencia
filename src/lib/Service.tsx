@@ -20,7 +20,7 @@ interface LocationData {
   appointments?: string[]
 }
 
-function Service(props: ServiceProps) {
+function Service(props: Readonly<ServiceProps>) {
   const {isOpen, onToggle} = useDisclosure()
   const {isDenied} = useMessaging()
   const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -76,7 +76,7 @@ function Service(props: ServiceProps) {
   )
 }
 
-function ServiceHeaderRightIcon(props: { isLoading: boolean, isOpen: boolean }) {
+function ServiceHeaderRightIcon(props: Readonly<{ isLoading: boolean, isOpen: boolean }>) {
   const color = useColorModeValue('gray.500', 'gray.400')
 
   if (props.isLoading) return <Spinner color={color} thickness={"2px"} speed={"2.5s"} label={"Loading"} boxSize={6}/>
