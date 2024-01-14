@@ -66,8 +66,8 @@ const setLocationAppointments = async (serviceId: string, loc: LocationData): Pr
 
 // valencia.es endpoints for service locations and appointments availability
 const serviceLocationsUrl = (serviceId: string) =>
-  `http://www.valencia.es/qsige.localizador/citaPrevia/centros/servicio/disponible/${serviceId}`
+  `https://www.valencia.es/qsige.localizador/citaPrevia/centros/servicio/disponible/${serviceId}`
 const locationAppointmentsUrl = (serviceId: string, locationId: string) =>
-  `http://www.valencia.es/qsige.localizador/citaPrevia/disponible/centro/${locationId}/servicio/${serviceId}/calendario`
+  `https://www.valencia.es/qsige.localizador/citaPrevia/disponible/centro/${locationId}/servicio/${serviceId}/calendario`
 
 export default withSentry(getServiceLocationsHandler);

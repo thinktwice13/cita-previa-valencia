@@ -6,7 +6,7 @@ interface ServiceResponse {
   nombre: string
 }
 
-const servicesUrl = 'http://www.valencia.es/qsige.localizador/citaPrevia/servicios/disponibles/'
+const servicesUrl = 'https://www.valencia.es/qsige.localizador/citaPrevia/servicios/disponibles/'
 
 export function getServiceOptions(): Promise<ServiceData[]> {
   return fetch(servicesUrl, {

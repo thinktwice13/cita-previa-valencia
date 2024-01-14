@@ -33,7 +33,7 @@ async function NotifyAppointments(req: NextApiRequest, res: NextApiResponse) {
 
 
 // Get full appointment check url for service and location
-const topicAppointmentsUrl = (location: string, service: string): string => `http://www.valencia.es/qsige.localizador/citaPrevia/disponible/centro/${location}/servicio/${service}/calendario`
+const topicAppointmentsUrl = (location: string, service: string): string => `https://www.valencia.es/qsige.localizador/citaPrevia/disponible/centro/${location}/servicio/${service}/calendario`
 
 async function hasTopicNewAppointments(topic: string, cb: (has: boolean) => void): Promise<void> {
   const [serviceId, locationId] = topic.split('_')
